@@ -8,11 +8,13 @@ from src.models.civil_status import CivilStatus
 from src.models.departments import Departments
 from src.models.employee_status import EmployeeStatus
 from src.models.employees import Employees
+from src.models.ethnicities import Ethnicities
 from src.models.functions import Functions
 from src.models.genders import Genders
 from src.models.hierarchy_structure import HierarchyStructure
 from src.models.neighborhoods import Neighborhoods
 from src.models.sectors import Sectors
+from src.models.states import States
 from src.models.subsidiaries import Subsidiaries
 from src.models.turns import Turns
 from src.models.users import Users
@@ -48,6 +50,8 @@ async def create_db_and_tables():
                 CivilStatus,
                 Cities,
                 Neighborhoods,
+                Ethnicities,
+                States,
             ],
             use_identity=False,
         )

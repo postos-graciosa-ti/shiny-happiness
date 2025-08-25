@@ -7,6 +7,9 @@ class Employees(SQLModel, table=True):
     __tablename__ = "employees"
     id: int | None = Field(default=None, primary_key=True)
     name: str
+    tshirt_len: str
+    legs_len: str
+    feet_len: str
     subsidiarie_id: int = Field(default=None, foreign_key="subsidiaries.id")
     function_id: int = Field(default=None, foreign_key="functions.id")
     turn_id: int = Field(default=None, foreign_key="turns.id")
@@ -31,3 +34,26 @@ class Employees(SQLModel, table=True):
     neighborhood_id: int = Field(default=None, foreign_key="neighborhoods.id")
     phone: str
     mobile: str
+    email: str
+    ethnicitie_id: int = Field(default=None, foreign_key="ethnicities.id")
+    datebirth: date
+    birthstate_id: int = Field(default=None, foreign_key="states.id")
+    birthcity_id: int = Field(default=None, foreign_key="cities.id")
+    mothername: str
+    fathername: str
+    cpf: str
+    rg: str
+    rg_issuing_agency: str
+    rg_state_id: int = Field(default=None, foreign_key="states.id")
+    rg_expedition_date: date
+    military_certificate: str
+    pis: str
+    pis_register_date: date
+    votant_title: str
+    votant_zone: str
+    votant_session: str
+    ctps: str
+    ctps_serie: str
+    ctps_state: int = Field(default=None, foreign_key="states.id")
+    ctps_emission_date: date
+    cnh: str
