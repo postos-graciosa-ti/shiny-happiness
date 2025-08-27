@@ -3,6 +3,7 @@ from sqlalchemy import text
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+
 async def get_column_type(column, dialect: str) -> str:
     """
     Retorna o tipo de dado da coluna, ajustando para o dialeto do banco.
@@ -26,9 +27,9 @@ async def get_column_type(column, dialect: str) -> str:
     return col_type_str
 
 
-async def watch(engine: AsyncEngine, models: list[type[SQLModel]], use_identity: bool = False):
+async def watch(engine: AsyncEngine, use_identity: bool = False):
     """
-    Cria ou altera tabelas para corresponder aos modelos fornecidos.
+    Cria ou altera tabelas para corresponder aos modelos registrados no SQLModel.metadata.
     Funciona de forma assíncrona com AsyncEngine (SQLite ou PostgreSQL).
     """
     db_dialect = os.environ.get("DIALETICS", "").lower()
@@ -45,8 +46,8 @@ async def watch(engine: AsyncEngine, models: list[type[SQLModel]], use_identity:
     print(f"Usando o dialeto: {db_dialect}")
 
     async with engine.begin() as conn:
-        for model in models:
-            table_name = model.__tablename__
+        for table in SQLModel.metadata.tables.values():
+            table_name = table.name
 
             # Verifica colunas existentes
             if db_dialect == "sqlite":
@@ -71,7 +72,7 @@ async def watch(engine: AsyncEngine, models: list[type[SQLModel]], use_identity:
             # Criar tabela se não existir
             if not table_exists:
                 columns = []
-                for column in model.__table__.columns:
+                for column in table.columns:
                     col_type = await get_column_type(column, db_dialect)
                     col_def = f"{column.name} {col_type}"
 
@@ -95,7 +96,7 @@ async def watch(engine: AsyncEngine, models: list[type[SQLModel]], use_identity:
 
             else:
                 # Adicionar colunas novas se não existirem
-                for column in model.__table__.columns:
+                for column in table.columns:
                     if column.name not in existing_columns:
                         col_type = await get_column_type(column, db_dialect)
                         query = text(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {col_type}")

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -41,13 +39,7 @@ async def handle_post_employees(employee: Employees):
 # NOTE: possível melhoria: só alterar o registro se for diferente do que está no banco real
 # NOTE: testar primeiro, se falhar, implantar melhoria
 async def handle_patch_employees(id: int, employee: Employees):
-    if isinstance(employee.admission_date, str):
-        employee.admission_date = datetime.strptime(
-            employee.admission_date, "%Y-%m-%d"
-        ).date()
-
-    elif isinstance(employee.admission_date, datetime):
-        employee.admission_date = employee.admission_date.date()
+    parse_dates(employee)
 
     async with AsyncSession(engine) as session:
         query = select(Employees).where(Employees.id == id)
