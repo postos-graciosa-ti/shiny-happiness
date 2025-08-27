@@ -19,6 +19,7 @@ from src.models.subsidiaries import Subsidiaries
 from src.models.turns import Turns
 from src.models.users import Users
 from src.models.users_subsidiaries import UsersSubsidiaries
+from src.models.payment_methods import PaymentMethods
 
 database_url = config("DATABASE_URL")
 
@@ -33,25 +34,27 @@ async def create_db_and_tables():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-        await watch(
-            engine,
-            [
-                Users,
-                Subsidiaries,
-                UsersSubsidiaries,
-                Employees,
-                Sectors,
-                Departments,
-                HierarchyStructure,
-                Functions,
-                Turns,
-                EmployeeStatus,
-                Genders,
-                CivilStatus,
-                Cities,
-                Neighborhoods,
-                Ethnicities,
-                States,
-            ],
-            use_identity=False,
-        )
+        await watch(engine, use_identity=False)
+
+        # await watch(
+        #     engine,
+        #     [
+        #         Users,
+        #         Subsidiaries,
+        #         UsersSubsidiaries,
+        #         Employees,
+        #         Sectors,
+        #         Departments,
+        #         HierarchyStructure,
+        #         Functions,
+        #         Turns,
+        #         EmployeeStatus,
+        #         Genders,
+        #         CivilStatus,
+        #         Cities,
+        #         Neighborhoods,
+        #         Ethnicities,
+        #         States,
+        #     ],
+        #     use_identity=False,
+        # )
