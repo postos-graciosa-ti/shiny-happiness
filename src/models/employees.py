@@ -218,3 +218,4 @@ class Employees(SQLModel, table=True):
     nationalitie_id: Optional[int] = Field(
         default=None, foreign_key="nationalities.id", nullable=True
     )
+    drive_files_url: Optional[str] = Field(default=None, nullable=True)
