@@ -2,25 +2,32 @@ import io
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any, List
 
 import aiosmtplib
 from decouple import config
 from openpyxl import load_workbook
+from pydantic import BaseModel
+from sqlalchemy.orm import aliased
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.config.database import engine
+from src.helpers.handle_update_xlsx_rows import handle_update_xlsx_rows
 from src.helpers.parse_dates import parse_dates
+from src.helpers.set_checkbox import set_checkbox
 from src.models.cities import Cities
 from src.models.civil_status import CivilStatus
 from src.models.cnh_categories import CnhCategories
 from src.models.employees import Employees
 from src.models.ethnicities import Ethnicities
+from src.models.functions import Functions
 from src.models.genders import Genders
 from src.models.nationalities import Nationalities
 from src.models.neighborhoods import Neighborhoods
 from src.models.states import States
 from src.models.subsidiaries import Subsidiaries
+from src.schemas.employees import RowsListParams
 
 
 async def handle_get_employees_by_subsidiarie(id: int):
@@ -55,46 +62,6 @@ async def handle_post_employees(employee: Employees):
 
 async def handle_post_send_employees_admission_to_contability(id: int):
     async with AsyncSession(engine) as session:
-        employee_data = await session.get(Employees, id)
-
-        employee_subsidiarie = await session.get(
-            Subsidiaries, employee_data.subsidiarie_id
-        )
-
-        employee_gender = await session.get(Genders, employee_data.gender_id)
-
-        employee_civil_status = await session.get(
-            CivilStatus, employee_data.civil_status_id
-        )
-
-        employee_neighborhood = await session.get(
-            Neighborhoods, employee_data.neighborhood_id
-        )
-
-        employee_residence_city = await session.get(
-            Cities, employee_data.residence_city_id
-        )
-
-        employee_ethnicities = await session.get(
-            Ethnicities, employee_data.ethnicitie_id
-        )
-
-        employee_birthcity = await session.get(Cities, employee_data.birthcity_id)
-
-        employee_birthstate = await session.get(States, employee_data.birthstate_id)
-
-        employee_nationalitie = await session.get(
-            Nationalities, employee_data.nationalitie_id
-        )
-
-        employee_rg_state = await session.get(States, employee_data.rg_state_id)
-
-        employee_ctps_state = await session.get(States, employee_data.ctps_state)
-
-        employee_cnh_category = await session.get(
-            CnhCategories, employee_data.cnh_category_id
-        )
-
         SMTP_HOST = config("SMTP_HOST")
 
         SMTP_PORT = config("SMTP_PORT")
@@ -111,123 +78,158 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
         ws = wb.active
 
-        ws["H1"] = employee_subsidiarie.name
+        ResidenceCity = aliased(Cities)
 
-        ws["H4"] = employee_data.name
+        BirthCity = aliased(Cities)
 
-        ws["AA4"] = employee_gender.name
+        BirthState = aliased(States)
 
-        ws["AI4"] = employee_civil_status.name
+        RgState = aliased(States)
 
-        ws["J6"] = employee_data.street
+        CtpsState = aliased(States)
 
-        ws["Y6"] = employee_data.street_number
+        ResidenceState = aliased(States)
 
-        # ws["AJ6"] = employee_data complemento
+        query = (
+            select(
+                Employees,
+                Subsidiaries,
+                Genders,
+                CivilStatus,
+                Neighborhoods,
+                ResidenceCity,
+                Ethnicities,
+                BirthCity,
+                BirthState,
+                Nationalities,
+                RgState,
+                CtpsState,
+                CnhCategories,
+                Functions,
+                ResidenceState,
+            )
+            .join(Subsidiaries, Subsidiaries.id == Employees.subsidiarie_id)
+            .join(Genders, Genders.id == Employees.gender_id)
+            .join(CivilStatus, CivilStatus.id == Employees.civil_status_id)
+            .join(Neighborhoods, Neighborhoods.id == Employees.neighborhood_id)
+            .join(ResidenceCity, ResidenceCity.id == Employees.residence_city_id)
+            .join(Ethnicities, Ethnicities.id == Employees.ethnicitie_id)
+            .join(BirthCity, BirthCity.id == Employees.birthcity_id)
+            .join(BirthState, BirthState.id == Employees.birthstate_id)
+            .join(Nationalities, Nationalities.id == Employees.nationalitie_id)
+            .join(RgState, RgState.id == Employees.rg_state_id)
+            .join(CtpsState, CtpsState.id == Employees.ctps_state)
+            .join(CnhCategories, CnhCategories.id == Employees.cnh_category_id)
+            .join(Functions, Functions.id == Employees.function_id)
+            .join(ResidenceState, ResidenceState.id == Employees.residence_state_id)
+            .where(Employees.id == id)
+        )
 
-        ws["H7"] = employee_neighborhood.name
+        result = await session.exec(query)
 
-        ws["X7"] = employee_data.cep
+        (
+            employee,
+            employee_subsidiarie,
+            employee_gender,
+            employee_civil_status,
+            employee_neighborhood,
+            employee_residence_city,
+            employee_ethnicitie,
+            employee_birthcity,
+            employee_birthstate,
+            employee_nationalitie,
+            employee_rg_state,
+            employee_ctps_state,
+            employee_cnh_category,
+            employee_function,
+            employee_residence_state,
+        ) = result.first()
 
-        ws["AD7"] = employee_residence_city.name
+        rows_to_update = [
+            RowsListParams(coord="H1", value=employee_subsidiarie.name),
+            RowsListParams(coord="H4", value=employee.name),
+            RowsListParams(coord="AA4", value=employee_gender.name),
+            RowsListParams(coord="AI4", value=employee_civil_status.name),
+            RowsListParams(coord="J6", value=employee.street),
+            RowsListParams(coord="Y6", value=employee.street_number),
+            RowsListParams(coord="H7", value=employee_neighborhood.name),
+            RowsListParams(coord="X7", value=employee.cep),
+            RowsListParams(coord="AD7", value=employee_residence_city.name),
+            RowsListParams(coord="H9", value=employee.phone),
+            RowsListParams(coord="O9", value=employee.mobile),
+            RowsListParams(coord="Y9", value=employee.email),
+            RowsListParams(coord="AL9", value=employee_ethnicitie.name),
+            RowsListParams(coord="R10", value=employee_birthcity.name),
+            RowsListParams(coord="AB10", value=employee_birthstate.name),
+            RowsListParams(coord="AJ10", value=employee_nationalitie.name),
+            RowsListParams(coord="H11", value=employee.mothername),
+            RowsListParams(coord="AF11", value=employee.fathername),
+            RowsListParams(coord="H17", value=employee.cpf),
+            RowsListParams(coord="H18", value=employee.rg),
+            RowsListParams(coord="R18", value=employee.rg_issuing_agency),
+            RowsListParams(coord="X18", value=employee_rg_state.name),
+            RowsListParams(coord="R22", value=employee_ctps_state.name),
+            RowsListParams(coord="AA18", value=employee.rg_expedition_date),
+            RowsListParams(coord="H19", value=employee.military_certificate),
+            RowsListParams(coord="H20", value=employee.pis),
+            RowsListParams(coord="W20", value=employee.pis_register_date),
+            RowsListParams(coord="H21", value=employee.votant_title),
+            RowsListParams(coord="R21", value=employee.votant_zone),
+            RowsListParams(coord="Y21", value=employee.votant_session),
+            RowsListParams(coord="H22", value=employee.ctps),
+            RowsListParams(coord="M22", value=employee.ctps_serie),
+            RowsListParams(coord="T23", value=employee_cnh_category.name),
+            RowsListParams(coord="H30", value=employee_function.name),
+            RowsListParams(coord="Y22", value=employee.ctps_emission_date),
+            RowsListParams(coord="H23", value=employee.cnh),
+            RowsListParams(coord="Z23", value=employee.cnh_emission_date),
+            RowsListParams(coord="AI23", value=employee.cnh_validity_date),
+            RowsListParams(coord="W30", value=employee.admission_date),
+            RowsListParams(coord="AD30", value=employee.monthly_wage),
+            RowsListParams(coord="AJ30", value=employee.hourly_wage),
+            RowsListParams(coord="AL30", value=employee.pro_rated_hours),
+            RowsListParams(coord="AJ6", value=employee.street_complement),
+            RowsListParams(coord="AM7", value=employee_residence_state.name),
+        ]
 
-        # ws["AM"] = estado de residência
+        await handle_update_xlsx_rows(ws, rows_to_update)
 
-        ws["H9"] = employee_data.phone
+        set_checkbox(ws, "H25", "H26", employee.is_first_job)
 
-        ws["O9"] = employee_data.mobile
+        set_checkbox(ws, "O25", "O26", employee.already_has_been_employee)
 
-        ws["Y9"] = employee_data.email
+        set_checkbox(ws, "W25", "W26", employee.trade_union_contribution_this_year)
 
-        ws["AL9"] = employee_ethnicities.name
+        set_checkbox(ws, "AA25", "AA26", employee.receiving_unemployment_insurance)
 
-        ws["H10"] = employee_birthcity.name
+        set_checkbox(ws, "AK25", "AK26", employee.has_previous_experience)
 
-        ws["AB10"] = employee_birthstate.name
+        set_checkbox(ws, "P32", "M32", employee.has_harmfull_exposition)
 
-        ws["AJ10"] = employee_nationalitie.name
+        set_checkbox(ws, "B35", "B36", employee.has_transport_voucher)
 
-        ws["H11"] = employee_data.mothername
+        if employee.has_transport_voucher:
+            ws["G36"] = employee.daily_transport_units
 
-        ws["AF11"] = employee_data.fathername
+        if employee.experience_time_id:
+            ws["B39"] = "X"
 
-        ws["H17"] = employee_data.cpf
+            ws["F39"] = "X"
 
-        ws["H18"] = employee_data.rg
+            ws["H41"] = "X"
 
-        ws["R18"] = employee_data.rg_issuing_agency
-
-        ws["X18"] = employee_rg_state.name
-
-        ws["AA18"] = employee_data.rg_expedition_date
-
-        ws["H19"] = employee_data.military_certificate
-
-        ws["H20"] = employee_data.pis
-
-        ws["W20"] = employee_data.pis_register_date
-
-        ws["H21"] = employee_data.votant_title
-
-        ws["R21"] = employee_data.votant_zone
-
-        ws["Y21"] = employee_data.votant_session
-
-        ws["H22"] = employee_data.ctps
-
-        ws["M22"] = employee_data.ctps_serie
-
-        ws["R22"] = employee_ctps_state.name
-
-        ws["Y22"] = employee_data.ctps_emission_date
-
-        ws["H23"] = employee_data.cnh
-
-        ws["T23"] = employee_cnh_category.name
-
-        ws["Z23"] = employee_data.cnh_emission_date
-
-        ws["AI23"] = employee_data.cnh_validity_date
-
-        if (
-            employee_data.is_first_job is not None
-            and employee_data.is_first_job == False  # noqa: E712
-        ):
-            ws["H26"] = "X"
         else:
-            ws["H25"] = "X"
+            ws["B40"] = "X"
 
-        if (
-            employee_data.already_has_been_employee is not None
-            and employee_data.already_has_been_employee == False  # noqa: E712
-        ):
-            ws["O26"] = "X"
-        else:
-            ws["O25"] = "X"
+        set_checkbox(ws, "K44", "H44", employee.has_hazard_pay)
 
-        if (
-            employee_data.trade_union_contribution_this_year is not None
-            and employee_data.trade_union_contribution_this_year == False  # noqa: E712
-        ):
-            ws["W26"] = "X"
-        else:
-            ws["25"] = "X"
+        set_checkbox(ws, "K45", "H45", employee.has_unhealthy_pay)
 
-        if (
-            employee_data.receiving_unemployment_insurance is not None
-            and employee_data.receiving_unemployment_insurance == False  # noqa: E712
-        ):
-            ws["AA26"] = "X"
-        else:
-            ws["AA25"]
+        if employee_subsidiarie.id == 1:
+            ws["H46"] = "X"
 
-        if (
-            employee_data.has_previous_experience is not None
-            and employee_data.has_previous_experience == False  # noqa: E712
-        ):
-            ws["AK26"] = "X"
         else:
-            ws["AK25"] = "X"
+            ws["K46"] = employee_subsidiarie.id
 
         file_stream = io.BytesIO()
 
@@ -242,17 +244,17 @@ async def handle_post_send_employees_admission_to_contability(id: int):
         message["To"] = EMAIL_TO
 
         message["Subject"] = (
-            f"Encaminhamento de documentos do colaborador {employee_data.name} para admissão"
+            f"Encaminhamento de documentos do colaborador {employee.name} para admissão"
         )
 
         message.attach(
             MIMEText(
-                f"Segue em anexo os documentos do colaborador {employee_data.name} para admissão com data para {employee_data.admission_date}",
+                f"Segue em anexo os documentos do colaborador {employee.name} para admissão em {employee.admission_date}",
                 "plain",
             )
         )
 
-        file_name = f"ficha_da_contabilidade_{employee_data.name}.xlsx"
+        file_name = f"ficha_da_contabilidade_{employee.name}.xlsx"
 
         part = MIMEApplication(file_stream.read(), Name=file_name)
 
@@ -260,14 +262,18 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
         message.attach(part)
 
-        await aiosmtplib.send(
-            message,
-            hostname=SMTP_HOST,
-            port=SMTP_PORT,
-            username=SMTP_USER,
-            password=SMTP_PASS,
-            start_tls=True,
-        )
+        try:
+            await aiosmtplib.send(
+                message,
+                hostname=SMTP_HOST,
+                port=int(SMTP_PORT),
+                username=SMTP_USER,
+                password=SMTP_PASS,
+                start_tls=True,
+            )
+
+        except Exception as e:
+            return {"error": f"Falha ao enviar email: {str(e)}"}
 
         return {"status": "Email enviado com sucesso"}
 
