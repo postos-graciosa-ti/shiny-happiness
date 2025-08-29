@@ -209,7 +209,6 @@ class Employees(SQLModel, table=True):
     bank_account: Optional[str] = Field(default=None, nullable=True)
     wage: Optional[str] = Field(default=None, nullable=True)
     wage_advance: Optional[str] = Field(default=None, nullable=True)
-    has_harmful_agents: Optional[bool] = Field(default=None, nullable=True)
     health_insurance: Optional[str] = Field(default=None, nullable=True)
     life_insurance: Optional[str] = Field(default=None, nullable=True)
     ag: Optional[str] = Field(default=None, nullable=True)
