@@ -2,12 +2,10 @@ import io
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, List
 
 import aiosmtplib
 from decouple import config
 from openpyxl import load_workbook
-from pydantic import BaseModel
 from sqlalchemy.orm import aliased
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
