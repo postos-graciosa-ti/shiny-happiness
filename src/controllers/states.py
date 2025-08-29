@@ -12,3 +12,14 @@ async def handle_get_states():
         states = result.all()
 
         return states
+
+
+async def handle_post_states(state: States):
+    async with AsyncSession(engine) as session:
+        session.add(state)
+
+        await session.commit()
+
+        await session.refresh(state)
+
+        return state

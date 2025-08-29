@@ -14,3 +14,14 @@ async def handle_get_neighborhoods():
         neighborhoods = result.all()
 
         return neighborhoods
+
+
+async def handle_post_neighborhoods(neighborhood: Neighborhoods):
+    async with AsyncSession(engine) as session:
+        session.add(neighborhood)
+
+        await session.commit()
+
+        await session.refresh(neighborhood)
+
+        return neighborhood

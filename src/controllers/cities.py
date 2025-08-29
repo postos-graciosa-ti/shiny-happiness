@@ -14,3 +14,14 @@ async def handle_get_cities():
         cities = result.all()
 
         return cities
+
+
+async def handle_post_cities(city: Cities):
+    async with AsyncSession(engine) as session:
+        session.add(city)
+
+        await session.commit()
+
+        await session.refresh(city)
+
+        return city

@@ -209,7 +209,6 @@ class Employees(SQLModel, table=True):
     bank_account: Optional[str] = Field(default=None, nullable=True)
     wage: Optional[str] = Field(default=None, nullable=True)
     wage_advance: Optional[str] = Field(default=None, nullable=True)
-    has_harmful_agents: Optional[bool] = Field(default=None, nullable=True)
     health_insurance: Optional[str] = Field(default=None, nullable=True)
     life_insurance: Optional[str] = Field(default=None, nullable=True)
     ag: Optional[str] = Field(default=None, nullable=True)
@@ -218,3 +217,6 @@ class Employees(SQLModel, table=True):
     nationalitie_id: Optional[int] = Field(
         default=None, foreign_key="nationalities.id", nullable=True
     )
+    drive_files_url: Optional[str] = Field(default=None, nullable=True)
+    street_complement: str
+    residence_state_id: Optional[int] = Field(default=None, foreign_key="states.id", nullable=True)
