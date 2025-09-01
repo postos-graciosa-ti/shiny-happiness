@@ -219,4 +219,12 @@ class Employees(SQLModel, table=True):
     )
     drive_files_url: Optional[str] = Field(default=None, nullable=True)
     street_complement: str
-    residence_state_id: Optional[int] = Field(default=None, foreign_key="states.id", nullable=True)
+    residence_state_id: Optional[int] = Field(
+        default=None, foreign_key="states.id", nullable=True
+    )
+    workdays_id: Optional[int] = Field(
+        default=None, foreign_key="workdays.id", nullable=True
+    )
+    school_level_id: Optional[int] = Field(
+        default=None, foreign_key="school_levels.id", nullable=True
+    )

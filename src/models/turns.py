@@ -13,3 +13,6 @@ class Turns(SQLModel, table=True):
     end_interval_time: time
     end_time: time
     exception: Optional[str]
+    diary_charge: str
+    weekly_charge: str
+    monthly_charge: str
