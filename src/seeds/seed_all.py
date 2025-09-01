@@ -12,12 +12,14 @@ from src.seeds.hierarchy_structure import seed_hierarchy_structure
 from src.seeds.nationalities import seed_nationalities
 from src.seeds.neighborhoods import seed_neighborhoods
 from src.seeds.payment_methods import seed_payment_methods
+from src.seeds.school_levels import seed_school_levels
 from src.seeds.sectors import seed_sectors
 from src.seeds.states import seed_states
 from src.seeds.subsidiaries import seed_subsidiaries
 from src.seeds.turns import seed_turns
 from src.seeds.users import seed_users
 from src.seeds.users_subsidiaries import seed_users_subsidiaries
+from src.seeds.workdays import seed_workdays
 
 
 async def seed_all():
@@ -60,3 +62,7 @@ async def seed_all():
     await seed_banks()
 
     await seed_nationalities()
+
+    await seed_workdays()
+
+    await seed_school_levels()

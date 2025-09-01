@@ -25,6 +25,7 @@ from src.models.nationalities import Nationalities
 from src.models.neighborhoods import Neighborhoods
 from src.models.states import States
 from src.models.subsidiaries import Subsidiaries
+from src.models.turns import Turns
 from src.schemas.employees import RowsListParams
 
 
@@ -105,6 +106,7 @@ async def handle_post_send_employees_admission_to_contability(id: int):
                 CnhCategories,
                 Functions,
                 ResidenceState,
+                Turns,
             )
             .join(Subsidiaries, Subsidiaries.id == Employees.subsidiarie_id)
             .join(Genders, Genders.id == Employees.gender_id)
@@ -120,6 +122,7 @@ async def handle_post_send_employees_admission_to_contability(id: int):
             .join(CnhCategories, CnhCategories.id == Employees.cnh_category_id)
             .join(Functions, Functions.id == Employees.function_id)
             .join(ResidenceState, ResidenceState.id == Employees.residence_state_id)
+            .join(Turns, Turns.id == Employees.turn_id)
             .where(Employees.id == id)
         )
 
@@ -141,6 +144,7 @@ async def handle_post_send_employees_admission_to_contability(id: int):
             employee_cnh_category,
             employee_function,
             employee_residence_state,
+            employee_turn,
         ) = result.first()
 
         rows_to_update = [
@@ -228,6 +232,83 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
         else:
             ws["K46"] = employee_subsidiarie.id
+
+        if employee.workdays_id == 1:
+            ws["J35"] = "X"
+
+            ws["R35"] = employee_turn.start_time
+
+            ws["X35"] = employee_turn.start_interval_time
+
+            ws["AA35"] = employee_turn.end_interval_time
+
+            ws["AF35"] = employee_turn.end_time
+
+        elif employee.workdays_id == 2:
+            ws["J36"] = "X"
+
+            ws["R36"] = employee_turn.start_time
+
+            ws["X36"] = employee_turn.start_interval_time
+
+            ws["AA36"] = employee_turn.end_interval_time
+
+            ws["AF36"] = employee_turn.end_time
+
+        elif employee.workdays_id == 3:
+            ws["J37"] = "X"
+
+            ws["R37"] = employee_turn.start_time
+
+            ws["X37"] = employee_turn.start_interval_time
+
+            ws["AA37"] = employee_turn.end_interval_time
+
+            ws["AF37"] = employee_turn.end_time
+
+        if employee.school_level_id == 1:
+            ws["AF18"] = "X"
+
+        elif employee.school_level_id == 2:
+            ws["AF19"] = "X"
+
+        elif employee.school_level_id == 3:
+            ws["AF20"] = "X"
+
+        elif employee.school_level_id == 4:
+            ws["AK18"] = "X"
+
+        elif employee.school_level_id == 5:
+            ws["AK19"] = "X"
+
+        elif employee.school_level_id == 6:
+            ws["AK20"] = "X"
+
+        elif employee.school_level_id == 7:
+            ws["AK21"] = "X"
+
+        ws["W44"] = "X"
+
+        ws["AJ44"] = employee.ag
+
+        ws["AM44"] = employee.cc
+
+        if employee.health_insurance is not None:
+            ws["W46"] = "X"
+
+            ws["AB46"] = employee.health_insurance
+
+        if employee.life_insurance is not None:
+            ws["AH46"] = "X"
+
+            ws["AM46"] = employee.life_insurance
+
+        ws["H10"] = employee.datebirth
+
+        if employee.wage_advance is not None:
+            ws["W45"] = "X"
+
+            ws["AB45"] = employee.wage_advance
 
         file_stream = io.BytesIO()
 

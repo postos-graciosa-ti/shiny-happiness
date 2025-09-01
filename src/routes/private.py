@@ -13,9 +13,11 @@ from src.routes.hierarchy_structure import hierarchy_structure_routes
 from src.routes.nationalities import nationalities_routes
 from src.routes.neighborhoods import neighborhoods_routes
 from src.routes.payment_methods import payment_methods_routes
+from src.routes.school_levels import school_levels_routes
 from src.routes.sectors import sectors_routes
 from src.routes.states import states_routes
 from src.routes.turns import turns_routes
+from src.routes.workdays import workdays_routes
 
 private = [
     employees_routes,
@@ -36,4 +38,6 @@ private = [
     payment_methods_routes,
     banks_routes,
     nationalities_routes,
+    workdays_routes,
+    school_levels_routes,
 ]
