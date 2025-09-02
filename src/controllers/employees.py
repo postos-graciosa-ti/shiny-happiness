@@ -1,10 +1,14 @@
 import io
+import os
+from email import encoders
 from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import aiosmtplib
 from decouple import config
+from docx import Document
 from openpyxl import load_workbook
 from sqlalchemy.orm import aliased
 from sqlmodel import select
@@ -23,6 +27,7 @@ from src.models.functions import Functions
 from src.models.genders import Genders
 from src.models.nationalities import Nationalities
 from src.models.neighborhoods import Neighborhoods
+from src.models.sectors import Sectors
 from src.models.states import States
 from src.models.subsidiaries import Subsidiaries
 from src.models.turns import Turns
@@ -57,6 +62,107 @@ async def handle_post_employees(employee: Employees):
             await session.rollback()
 
             raise e
+
+
+async def handle_post_request_admissional_exam(id: int):
+    async with AsyncSession(engine) as session:
+        query = (
+            select(Employees, Subsidiaries, Sectors, Functions)
+            .join(Subsidiaries, Subsidiaries.id == Employees.subsidiarie_id)
+            .join(Sectors, Sectors.id == Employees.sector_id)
+            .join(Functions, Functions.id == Employees.function_id)
+            .where(Employees.id == id)
+        )
+
+        db_result = await session.exec(query)
+
+        result = db_result.first()
+
+        if not result:
+            raise ValueError("Funcionário não encontrado.")
+
+        employee, subsidiarie, sector, function = result
+
+        template_path = os.path.join("src", "assets", "exame_admissional_sesi.docx")
+
+        doc = Document(template_path)
+
+        placeholders = {
+            "{{ subsidiarie }}": subsidiarie.name if subsidiarie else "",
+            "{{ name }}": employee.name if employee else "",
+            "{{ cpf }}": employee.cpf if employee else "",
+            "{{ sector }}": sector.name if sector else "",
+            "{{ function }}": function.name if function else "",
+        }
+
+        for p in doc.paragraphs:
+            for ph, val in placeholders.items():
+                if ph in p.text:
+                    for run in p.runs:
+                        if ph in run.text:
+                            run.text = run.text.replace(ph, val)
+
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for ph, val in placeholders.items():
+                        if ph in cell.text:
+                            for p in cell.paragraphs:
+                                for run in p.runs:
+                                    if ph in run.text:
+                                        run.text = run.text.replace(ph, val)
+
+        output_path = os.path.join(
+            "src", "assets", f"admissional_exam_{employee.id}.docx"
+        )
+
+        doc.save(output_path)
+
+        message = MIMEMultipart()
+
+        message["From"] = "postosgraciosati@gmail.com"
+
+        message["To"] = "postosgraciosati@gmail.com"
+
+        message["Subject"] = "Exame Admissional"
+
+        body = f"""
+        Olá {employee.name},
+
+        Segue em anexo seu exame admissional.
+
+        Atenciosamente,
+        RH
+        """
+
+        message.attach(MIMEText(body, "plain"))
+
+        with open(output_path, "rb") as f:
+            part = MIMEBase("application", "octet-stream")
+
+            part.set_payload(f.read())
+
+            encoders.encode_base64(part)
+
+            part.add_header(
+                "Content-Disposition",
+                f"attachment; filename={os.path.basename(output_path)}",
+            )
+
+            message.attach(part)
+
+        await aiosmtplib.send(
+            message,
+            hostname="smtp.gmail.com",
+            port=587,
+            start_tls=True,
+            username="postosgraciosati@gmail.com",
+            password="ywog lshz tzdn nvru",
+        )
+
+        os.remove(output_path)
+
+        return {"status": "ok", "msg": f"E-mail enviado para {employee.email}"}
 
 
 async def handle_post_send_employees_admission_to_contability(id: int):

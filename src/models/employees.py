@@ -89,8 +89,9 @@
 
 
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 
@@ -227,4 +228,7 @@ class Employees(SQLModel, table=True):
     )
     school_level_id: Optional[int] = Field(
         default=None, foreign_key="school_levels.id", nullable=True
+    )
+    parents: Optional[dict[str, Any]] = Field(
+        sa_column=Column(JSON, nullable=True), default=None
     )
