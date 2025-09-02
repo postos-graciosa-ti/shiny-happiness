@@ -496,7 +496,7 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
         message.attach(
             MIMEText(
-                f"Segue em anexo os documentos do colaborador {employee.name} para admissão em {employee.admission_date}",
+                f"Seguem os documentos do colaborador {employee.name} para admissão em {employee.admission_date}: {employee.drive_files_url}",
                 "plain",
             )
         )
