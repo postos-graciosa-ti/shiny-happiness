@@ -33,6 +33,18 @@ from src.models.subsidiaries import Subsidiaries
 from src.models.turns import Turns
 from src.schemas.employees import RowsListParams
 
+SMTP_HOST = config("SMTP_HOST")
+
+SMTP_PORT = config("SMTP_PORT")
+
+SMTP_USER = config("SMTP_USER")
+
+SMTP_PASS = config("SMTP_PASS")
+
+SESI_EMAIL = config("SESI_EMAIL")
+
+MABECON_EMAIL = config("MABECON_EMAIL")
+
 
 async def handle_get_employees_by_subsidiarie(id: int):
     async with AsyncSession(engine) as session:
@@ -120,19 +132,18 @@ async def handle_post_request_admissional_exam(id: int):
 
         message = MIMEMultipart()
 
-        message["From"] = "postosgraciosati@gmail.com"
+        message["From"] = SMTP_USER
 
-        message["To"] = "postosgraciosati@gmail.com"
+        message["To"] = SESI_EMAIL
 
-        message["Subject"] = "Exame Admissional"
+        message["Subject"] = f"Exame admissional de {employee.name}"
 
         body = f"""
-        Olá {employee.name},
-
-        Segue em anexo seu exame admissional.
+        Segue em anexo solicitação de exame admissional para {employee.name}
 
         Atenciosamente,
-        RH
+
+        RH Postos Graciosa
         """
 
         message.attach(MIMEText(body, "plain"))
@@ -153,11 +164,11 @@ async def handle_post_request_admissional_exam(id: int):
 
         await aiosmtplib.send(
             message,
-            hostname="smtp.gmail.com",
-            port=587,
+            hostname=SMTP_HOST,
+            port=SMTP_PORT,
             start_tls=True,
-            username="postosgraciosati@gmail.com",
-            password="ywog lshz tzdn nvru",
+            username=SMTP_USER,
+            password=SMTP_PASS,
         )
 
         os.remove(output_path)
@@ -167,16 +178,6 @@ async def handle_post_request_admissional_exam(id: int):
 
 async def handle_post_send_employees_admission_to_contability(id: int):
     async with AsyncSession(engine) as session:
-        SMTP_HOST = config("SMTP_HOST")
-
-        SMTP_PORT = config("SMTP_PORT")
-
-        SMTP_USER = config("SMTP_USER")
-
-        SMTP_PASS = config("SMTP_PASS")
-
-        EMAIL_TO = config("EMAIL_TO")
-
         template_path = "src/assets/ficha_da_contabilidade.xlsx"
 
         wb = load_workbook(template_path)
@@ -426,7 +427,7 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
         message["From"] = SMTP_USER
 
-        message["To"] = EMAIL_TO
+        message["To"] = MABECON_EMAIL
 
         message["Subject"] = (
             f"Encaminhamento de documentos do colaborador {employee.name} para admissão"
