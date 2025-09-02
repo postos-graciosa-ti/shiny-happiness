@@ -417,6 +417,67 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
             ws["AB45"] = employee.wage_advance
 
+        columns = {
+            "name": "J",
+            "datebirth": "Y",
+            "cityState": "AC",
+            "cpf": "AG",
+            "book": "AL",
+            "paper": "AN",
+        }
+
+        for i, parent in enumerate(employee.parents[:3]):
+            row = 13 + i
+
+            ws[f"{columns['name']}{row}"] = parent.get("name", "")
+
+            ws[f"{columns['datebirth']}{row}"] = parent.get("datebirth", "")
+
+            ws[f"{columns['cityState']}{row}"] = parent.get("cityState", "")
+
+            ws[f"{columns['cpf']}{row}"] = parent.get("cpf", "")
+
+            ws[f"{columns['book']}{row}"] = parent.get("book", "")
+
+            ws[f"{columns['paper']}{row}"] = parent.get("paper", "")
+
+        # if len(employee.parents) >= 2:
+        #     ws["J13"] = employee.parents[0].get("name", "")
+
+        #     ws["Y13"] = employee.parents[0].get("datebirth", "")
+
+        #     ws["AC13"] = employee.parents[0].get("cityState", "")
+
+        #     ws["AG13"] = employee.parents[0].get("cpf", "")
+
+        #     ws["AL13"] = employee.parents[0].get("book", "")
+
+        #     ws["AL13"] = employee.parents[0].get("paper", "")
+
+        #     ws["J14"] = employee.parents[1].get("name", "")
+
+        #     ws["Y14"] = employee.parents[1].get("datebirth", "")
+
+        #     ws["AC14"] = employee.parents[1].get("cityState", "")
+
+        #     ws["AG14"] = employee.parents[1].get("cpf", "")
+
+        #     ws["AL14"] = employee.parents[1].get("book", "")
+
+        #     ws["AL14"] = employee.parents[1].get("paper", "")
+
+        #     ws["J15"] = employee.parents[2].get("name", "")
+
+        #     ws["Y15"] = employee.parents[2].get("datebirth", "")
+
+        #     ws["AC15"] = employee.parents[2].get("cityState", "")
+
+        #     ws["AG15"] = employee.parents[2].get("cpf", "")
+
+        #     ws["AL15"] = employee.parents[2].get("book", "")
+
+        #     ws["AL15"] = employee.parents[2].get("paper", "")
+
         file_stream = io.BytesIO()
 
         wb.save(file_stream)
