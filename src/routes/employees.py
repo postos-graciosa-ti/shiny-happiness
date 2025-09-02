@@ -5,6 +5,7 @@ from src.controllers.employees import (
     handle_get_employees_by_subsidiarie,
     handle_patch_employees,
     handle_post_employees,
+    handle_post_request_admissional_exam,
     handle_post_send_employees_admission_to_contability,
 )
 from src.models.employees import Employees
@@ -21,6 +22,11 @@ async def get_employees(id: int):
 @employees_routes.post("/subsidiaries/{id}/employees")
 async def post_employees(employee: Employees):
     return await handle_post_employees(employee)
+
+
+@employees_routes.post("/employees/{id}/request-admissional-exam")
+async def post_request_admissional_exam(id: int):
+    return await handle_post_request_admissional_exam(id)
 
 
 @employees_routes.post("/employees/{id}/send-admission-to-contability")
