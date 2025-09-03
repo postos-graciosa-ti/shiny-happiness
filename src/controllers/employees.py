@@ -1,3 +1,4 @@
+import base64
 import io
 import os
 from email import encoders
@@ -15,6 +16,10 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.config.database import engine
+from src.helpers.decode_pdf_fields import decode_pdf_fields
+from src.helpers.encode_pdf_fields import encode_pdf_fields
+from src.helpers.ensure_pdf import ensure_pdf
+from src.helpers.get_binary_fields import get_binary_fields
 from src.helpers.handle_update_xlsx_rows import handle_update_xlsx_rows
 from src.helpers.parse_dates import parse_dates
 from src.helpers.set_checkbox import set_checkbox
@@ -54,11 +59,13 @@ async def handle_get_employees_by_subsidiarie(id: int):
 
         employees = result.all()
 
-        return employees
+        return [encode_pdf_fields(emp) for emp in employees]
 
 
 async def handle_post_employees(employee: Employees):
     parse_dates(employee)
+
+    decode_pdf_fields(employee)
 
     async with AsyncSession(engine) as session:
         session.add(employee)
@@ -441,43 +448,6 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
             ws[f"{columns['paper']}{row}"] = parent.get("paper", "")
 
-        # if len(employee.parents) >= 2:
-        #     ws["J13"] = employee.parents[0].get("name", "")
-
-        #     ws["Y13"] = employee.parents[0].get("datebirth", "")
-
-        #     ws["AC13"] = employee.parents[0].get("cityState", "")
-
-        #     ws["AG13"] = employee.parents[0].get("cpf", "")
-
-        #     ws["AL13"] = employee.parents[0].get("book", "")
-
-        #     ws["AL13"] = employee.parents[0].get("paper", "")
-
-        #     ws["J14"] = employee.parents[1].get("name", "")
-
-        #     ws["Y14"] = employee.parents[1].get("datebirth", "")
-
-        #     ws["AC14"] = employee.parents[1].get("cityState", "")
-
-        #     ws["AG14"] = employee.parents[1].get("cpf", "")
-
-        #     ws["AL14"] = employee.parents[1].get("book", "")
-
-        #     ws["AL14"] = employee.parents[1].get("paper", "")
-
-        #     ws["J15"] = employee.parents[2].get("name", "")
-
-        #     ws["Y15"] = employee.parents[2].get("datebirth", "")
-
-        #     ws["AC15"] = employee.parents[2].get("cityState", "")
-
-        #     ws["AG15"] = employee.parents[2].get("cpf", "")
-
-        #     ws["AL15"] = employee.parents[2].get("book", "")
-
-        #     ws["AL15"] = employee.parents[2].get("paper", "")
-
         file_stream = io.BytesIO()
 
         wb.save(file_stream)
@@ -541,6 +511,18 @@ async def handle_patch_employees(id: int, employee: Employees):
             return None
 
         for key, value in employee.dict(exclude_unset=True).items():
+            if key in get_binary_fields():
+                if isinstance(value, str):
+                    try:
+                        value = base64.b64decode(value)
+
+                    except Exception as e:
+                        raise ValueError(
+                            f"Erro ao decodificar arquivo do campo {key}"
+                        ) from e
+
+                value = ensure_pdf(value, f"{key}.pdf")
+
             setattr(db_employee, key, value)
 
         session.add(db_employee)
@@ -549,7 +531,7 @@ async def handle_patch_employees(id: int, employee: Employees):
 
         await session.refresh(db_employee)
 
-        return db_employee
+        return encode_pdf_fields(db_employee)
 
 
 # NOTE: depois employee.id vai ser chave estrangeira em outras tabelas
