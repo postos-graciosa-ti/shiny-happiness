@@ -91,7 +91,7 @@
 from datetime import date
 from typing import Any, Optional
 
-from sqlalchemy import JSON, Column
+from sqlalchemy import JSON, Column, LargeBinary
 from sqlmodel import Field, SQLModel
 
 
@@ -232,12 +232,30 @@ class Employees(SQLModel, table=True):
     parents: Optional[dict[str, Any]] = Field(
         sa_column=Column(JSON, nullable=True), default=None
     )
-    ctps_file: Optional[bytes] = Field(default=None)
-    admission_health_exam_file: Optional[bytes] = Field(default=None)
-    identity_file: Optional[bytes] = Field(default=None)
-    cpf_file: Optional[bytes] = Field(default=None)
-    votant_title_file: Optional[bytes] = Field(default=None)
-    residence_proof: Optional[bytes] = Field(default=None)
-    cnh_file: Optional[bytes] = Field(default=None)
-    marriage_certificate_file: Optional[bytes] = Field(default=None)
-    military_certificate_file: Optional[bytes] = Field(default=None)
+    ctps_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    admission_health_exam_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    identity_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    cpf_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    votant_title_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    residence_proof: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    cnh_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    marriage_certificate_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
+    military_certificate_file: Optional[bytes] = Field(
+        sa_column=Column(LargeBinary, nullable=True), default=None
+    )
