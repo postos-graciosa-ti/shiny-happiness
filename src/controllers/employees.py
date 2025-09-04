@@ -1,5 +1,6 @@
 import base64
 import io
+import mimetypes
 import os
 from email import encoders
 from email.mime.application import MIMEApplication
@@ -478,6 +479,63 @@ async def handle_post_send_employees_admission_to_contability(id: int):
         part["Content-Disposition"] = f'attachment; filename="{file_name}"'
 
         message.attach(part)
+
+        binary_fields = [
+            ("ctps_file", f"ctps_{employee.name}.pdf"),
+            (
+                "admission_health_exam_file",
+                f"exame_medico_admissional_{employee.name}.pdf",
+            ),
+            ("identity_file", f"identidade_{employee.name}.pdf"),
+            ("cpf_file", f"cpf_{employee.name}.pdf"),
+            ("votant_title_file", f"titulo_eleitor_{employee.name}.pdf"),
+            ("residence_proof", f"comprovante_residencia_{employee.name}.pdf"),
+            ("cnh_file", f"cnh_{employee.name}.pdf"),
+            ("marriage_certificate_file", f"certificado_casamento_{employee.name}.pdf"),
+            (
+                "military_certificate_file",
+                f"certificado_reservista_{employee.name}.pdf",
+            ),
+        ]
+
+        for field, default_name in binary_fields:
+            file_data = getattr(employee, field, None)
+
+            if file_data:
+                mimetype, _ = mimetypes.guess_type(default_name)
+
+                part = MIMEApplication(file_data, Name=default_name)
+
+                part["Content-Disposition"] = f'attachment; filename="{default_name}"'
+
+                message.attach(part)
+
+        parent_files = [
+            ("birthCertificate", f"certidao_nascimento_{employee.name}"),
+            ("vaccinationCard", f"carteira_vacinacao_{employee.name}"),
+            ("schoolingProof", f"comprovante_escolar_{employee.name}"),
+        ]
+
+        for i, parent in enumerate(employee.parents or []):
+            for field, prefix in parent_files:
+                file_b64 = parent.get(field)
+
+                if file_b64:
+                    try:
+                        file_data = base64.b64decode(file_b64)
+
+                        file_name = f"{prefix}_parent_{i + 1}.pdf"
+
+                        part = MIMEApplication(file_data, Name=file_name)
+
+                        part["Content-Disposition"] = (
+                            f'attachment; filename="{file_name}"'
+                        )
+
+                        message.attach(part)
+
+                    except Exception as e:
+                        print(f"Erro ao decodificar {field} do parent {i + 1}: {e}")
 
         try:
             await aiosmtplib.send(
