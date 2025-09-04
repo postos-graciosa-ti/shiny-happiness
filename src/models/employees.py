@@ -200,8 +200,12 @@ class Employees(SQLModel, table=True):
     experience_time_id: Optional[int] = Field(
         default=None, foreign_key="experiences_times.id", nullable=True
     )
-    has_hazard_pay: Optional[bool] = Field(default=None, nullable=True)
-    has_unhealthy_pay: Optional[bool] = Field(default=None, nullable=True)
+    has_hazard_pay: Optional[bool] = Field(
+        default=None, nullable=True
+    )  # periculosidade
+    has_unhealthy_pay: Optional[bool] = Field(
+        default=None, nullable=True
+    )  # insalubridade
     payment_method_id: Optional[int] = Field(
         default=None, foreign_key="payment_methods.id", nullable=True
     )
