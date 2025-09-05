@@ -194,9 +194,9 @@ class Employees(SQLModel, table=True):
     hourly_wage: Optional[str] = Field(default=None, nullable=True)
     pro_rated_hours: Optional[str] = Field(default=None, nullable=True)
     has_transport_voucher: Optional[bool] = Field(default=None, nullable=True)
-    daily_transport_units: Optional[str] = Field(default=None, nullable=True)
-    weekly_transport_units: Optional[str] = Field(default=None, nullable=True)
-    monthly_transport_units: Optional[str] = Field(default=None, nullable=True)
+    # daily_transport_units: Optional[str] = Field(default=None, nullable=True)
+    # weekly_transport_units: Optional[str] = Field(default=None, nullable=True)
+    # monthly_transport_units: Optional[str] = Field(default=None, nullable=True)
     experience_time_id: Optional[int] = Field(
         default=None, foreign_key="experiences_times.id", nullable=True
     )
@@ -222,8 +222,8 @@ class Employees(SQLModel, table=True):
     nationalitie_id: Optional[int] = Field(
         default=None, foreign_key="nationalities.id", nullable=True
     )
-    drive_files_url: Optional[str] = Field(default=None, nullable=True)
-    street_complement: str
+    # drive_files_url: Optional[str] = Field(default=None, nullable=True)
+    street_complement: Optional[str] = Field(default=None, nullable=True)
     residence_state_id: Optional[int] = Field(
         default=None, foreign_key="states.id", nullable=True
     )
