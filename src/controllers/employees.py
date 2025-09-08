@@ -187,244 +187,224 @@ async def handle_post_request_admissional_exam(id: int):
 async def handle_post_send_employees_admission_to_contability(id: int):
     async with AsyncSession(engine) as session:
         template_path = "src/assets/ficha_da_contabilidade.xlsx"
-
         wb = load_workbook(template_path)
-
         ws = wb.active
 
-        ResidenceCity = aliased(Cities)
+        # Função helper para atualizar células apenas se o valor existir
+        def safe_row(coord: str, value, attr: str = None):
+            if value is None:
+                return None
+            if attr:
+                v = getattr(value, attr, None)
+                if v is None:
+                    return None
+                return RowsListParams(coord=coord, value=v)
+            return RowsListParams(coord=coord, value=value)
 
-        BirthCity = aliased(Cities)
+        # Função helper para checkboxes seguros
+        def set_safe_checkbox(start, end, value):
+            if value is not None:
+                set_checkbox(ws, start, end, value)
 
-        BirthState = aliased(States)
+        # Busca funcionário
+        employee = await session.get(Employees, id)
+        if not employee:
+            return {"error": f"Employee with id {id} not found"}
 
-        RgState = aliased(States)
-
-        CtpsState = aliased(States)
-
-        ResidenceState = aliased(States)
-
-        query = (
-            select(
-                Employees,
-                Subsidiaries,
-                Genders,
-                CivilStatus,
-                Neighborhoods,
-                ResidenceCity,
-                Ethnicities,
-                BirthCity,
-                BirthState,
-                Nationalities,
-                RgState,
-                CtpsState,
-                CnhCategories,
-                Functions,
-                ResidenceState,
-                Turns,
-            )
-            .join(Subsidiaries, Subsidiaries.id == Employees.subsidiarie_id)
-            .join(Genders, Genders.id == Employees.gender_id)
-            .join(CivilStatus, CivilStatus.id == Employees.civil_status_id)
-            .join(Neighborhoods, Neighborhoods.id == Employees.neighborhood_id)
-            .join(ResidenceCity, ResidenceCity.id == Employees.residence_city_id)
-            .join(Ethnicities, Ethnicities.id == Employees.ethnicitie_id)
-            .join(BirthCity, BirthCity.id == Employees.birthcity_id)
-            .join(BirthState, BirthState.id == Employees.birthstate_id)
-            .join(Nationalities, Nationalities.id == Employees.nationalitie_id)
-            .join(RgState, RgState.id == Employees.rg_state_id)
-            .join(CtpsState, CtpsState.id == Employees.ctps_state)
-            .join(CnhCategories, CnhCategories.id == Employees.cnh_category_id)
-            .join(Functions, Functions.id == Employees.function_id)
-            .join(ResidenceState, ResidenceState.id == Employees.residence_state_id)
-            .join(Turns, Turns.id == Employees.turn_id)
-            .where(Employees.id == id)
+        # Busca todas as chaves estrangeiras manualmente
+        employee_subsidiarie = (
+            await session.get(Subsidiaries, employee.subsidiarie_id)
+            if employee.subsidiarie_id
+            else None
+        )
+        employee_gender = (
+            await session.get(Genders, employee.gender_id)
+            if employee.gender_id
+            else None
+        )
+        employee_civil_status = (
+            await session.get(CivilStatus, employee.civil_status_id)
+            if employee.civil_status_id
+            else None
+        )
+        employee_neighborhood = (
+            await session.get(Neighborhoods, employee.neighborhood_id)
+            if employee.neighborhood_id
+            else None
+        )
+        employee_residence_city = (
+            await session.get(Cities, employee.residence_city_id)
+            if employee.residence_city_id
+            else None
+        )
+        employee_ethnicitie = (
+            await session.get(Ethnicities, employee.ethnicitie_id)
+            if employee.ethnicitie_id
+            else None
+        )
+        employee_birthcity = (
+            await session.get(Cities, employee.birthcity_id)
+            if employee.birthcity_id
+            else None
+        )
+        employee_birthstate = (
+            await session.get(States, employee.birthstate_id)
+            if employee.birthstate_id
+            else None
+        )
+        employee_nationalitie = (
+            await session.get(Nationalities, employee.nationalitie_id)
+            if employee.nationalitie_id
+            else None
+        )
+        employee_rg_state = (
+            await session.get(States, employee.rg_state_id)
+            if employee.rg_state_id
+            else None
+        )
+        employee_ctps_state = (
+            await session.get(States, employee.ctps_state)
+            if employee.ctps_state
+            else None
+        )
+        employee_cnh_category = (
+            await session.get(CnhCategories, employee.cnh_category_id)
+            if employee.cnh_category_id
+            else None
+        )
+        employee_function = (
+            await session.get(Functions, employee.function_id)
+            if employee.function_id
+            else None
+        )
+        employee_residence_state = (
+            await session.get(States, employee.residence_state_id)
+            if employee.residence_state_id
+            else None
+        )
+        employee_turn = (
+            await session.get(Turns, employee.turn_id) if employee.turn_id else None
         )
 
-        result = await session.exec(query)
-
-        (
-            employee,
-            employee_subsidiarie,
-            employee_gender,
-            employee_civil_status,
-            employee_neighborhood,
-            employee_residence_city,
-            employee_ethnicitie,
-            employee_birthcity,
-            employee_birthstate,
-            employee_nationalitie,
-            employee_rg_state,
-            employee_ctps_state,
-            employee_cnh_category,
-            employee_function,
-            employee_residence_state,
-            employee_turn,
-        ) = result.first()
-
-        rows_to_update = [
-            RowsListParams(coord="H1", value=employee_subsidiarie.name),
-            RowsListParams(coord="H4", value=employee.name),
-            RowsListParams(coord="AA4", value=employee_gender.name),
-            RowsListParams(coord="AI4", value=employee_civil_status.name),
-            RowsListParams(coord="J6", value=employee.street),
-            RowsListParams(coord="Y6", value=employee.street_number),
-            RowsListParams(coord="H7", value=employee_neighborhood.name),
-            RowsListParams(coord="X7", value=employee.cep),
-            RowsListParams(coord="AD7", value=employee_residence_city.name),
-            RowsListParams(coord="H9", value=employee.phone),
-            RowsListParams(coord="O9", value=employee.mobile),
-            RowsListParams(coord="Y9", value=employee.email),
-            RowsListParams(coord="AL9", value=employee_ethnicitie.name),
-            RowsListParams(coord="R10", value=employee_birthcity.name),
-            RowsListParams(coord="AB10", value=employee_birthstate.name),
-            RowsListParams(coord="AJ10", value=employee_nationalitie.name),
-            RowsListParams(coord="H11", value=employee.mothername),
-            RowsListParams(coord="AF11", value=employee.fathername),
-            RowsListParams(coord="H17", value=employee.cpf),
-            RowsListParams(coord="H18", value=employee.rg),
-            RowsListParams(coord="R18", value=employee.rg_issuing_agency),
-            RowsListParams(coord="X18", value=employee_rg_state.name),
-            RowsListParams(coord="R22", value=employee_ctps_state.name),
-            RowsListParams(coord="AA18", value=employee.rg_expedition_date),
-            RowsListParams(coord="H19", value=employee.military_certificate),
-            RowsListParams(coord="H20", value=employee.pis),
-            RowsListParams(coord="W20", value=employee.pis_register_date),
-            RowsListParams(coord="H21", value=employee.votant_title),
-            RowsListParams(coord="R21", value=employee.votant_zone),
-            RowsListParams(coord="Y21", value=employee.votant_session),
-            RowsListParams(coord="H22", value=employee.ctps),
-            RowsListParams(coord="M22", value=employee.ctps_serie),
-            RowsListParams(coord="T23", value=employee_cnh_category.name),
-            RowsListParams(coord="H30", value=employee_function.name),
-            RowsListParams(coord="Y22", value=employee.ctps_emission_date),
-            RowsListParams(coord="H23", value=employee.cnh),
-            RowsListParams(coord="Z23", value=employee.cnh_emission_date),
-            RowsListParams(coord="AI23", value=employee.cnh_validity_date),
-            RowsListParams(coord="W30", value=employee.admission_date),
-            RowsListParams(coord="AD30", value=employee.monthly_wage),
-            RowsListParams(coord="AJ30", value=employee.hourly_wage),
-            RowsListParams(coord="AL30", value=employee.pro_rated_hours),
-            RowsListParams(coord="AJ6", value=employee.street_complement),
-            RowsListParams(coord="AM7", value=employee_residence_state.name),
-        ]
+        # Monta lista de rows com valores seguros
+        rows_to_update = list(
+            filter(
+                None,
+                [
+                    safe_row("H1", employee_subsidiarie, "name"),
+                    safe_row("H4", employee, "name"),
+                    safe_row("AA4", employee_gender, "name"),
+                    safe_row("AI4", employee_civil_status, "name"),
+                    safe_row("J6", employee.street),
+                    safe_row("Y6", employee.street_number),
+                    safe_row("H7", employee_neighborhood, "name"),
+                    safe_row("X7", employee.cep),
+                    safe_row("AD7", employee_residence_city, "name"),
+                    safe_row("H9", employee.phone),
+                    safe_row("O9", employee.mobile),
+                    safe_row("Y9", employee.email),
+                    safe_row("AL9", employee_ethnicitie, "name"),
+                    safe_row("R10", employee_birthcity, "name"),
+                    safe_row("AB10", employee_birthstate, "name"),
+                    safe_row("AJ10", employee_nationalitie, "name"),
+                    safe_row("H11", employee.mothername),
+                    safe_row("AF11", employee.fathername),
+                    safe_row("H17", employee.cpf),
+                    safe_row("H18", employee.rg),
+                    safe_row("R18", employee.rg_issuing_agency),
+                    safe_row("X18", employee_rg_state, "name"),
+                    safe_row("R22", employee_ctps_state, "name"),
+                    safe_row("AA18", employee.rg_expedition_date),
+                    safe_row("H19", employee.military_certificate),
+                    safe_row("H20", employee.pis),
+                    safe_row("W20", employee.pis_register_date),
+                    safe_row("H21", employee.votant_title),
+                    safe_row("R21", employee.votant_zone),
+                    safe_row("Y21", employee.votant_session),
+                    safe_row("H22", employee.ctps),
+                    safe_row("M22", employee.ctps_serie),
+                    safe_row("T23", employee_cnh_category, "name"),
+                    safe_row("H30", employee_function, "name"),
+                    safe_row("Y22", employee.ctps_emission_date),
+                    safe_row("H23", employee.cnh),
+                    safe_row("Z23", employee.cnh_emission_date),
+                    safe_row("AI23", employee.cnh_validity_date),
+                    safe_row("W30", employee.admission_date),
+                    safe_row("AD30", employee.monthly_wage),
+                    safe_row("AJ30", employee.hourly_wage),
+                    safe_row("AL30", employee.pro_rated_hours),
+                    safe_row("AJ6", employee.street_complement),
+                    safe_row("AM7", employee_residence_state, "name"),
+                    safe_row("H10", employee.datebirth),
+                    safe_row("AJ44", employee.ag),
+                    safe_row("AM44", employee.cc),
+                ],
+            )
+        )
 
         await handle_update_xlsx_rows(ws, rows_to_update)
 
-        set_checkbox(ws, "H25", "H26", employee.is_first_job)
+        # Checkboxes seguros
+        set_safe_checkbox("H25", "H26", employee.is_first_job)
+        set_safe_checkbox("O25", "O26", employee.already_has_been_employee)
+        set_safe_checkbox("W25", "W26", employee.trade_union_contribution_this_year)
+        set_safe_checkbox("AA25", "AA26", employee.receiving_unemployment_insurance)
+        set_safe_checkbox("AK25", "AK26", employee.has_previous_experience)
+        set_safe_checkbox("P32", "M32", employee.has_harmfull_exposition)
+        set_safe_checkbox("B35", "B36", employee.has_transport_voucher)
+        set_safe_checkbox("K44", "H44", employee.has_hazard_pay)
+        set_safe_checkbox("K45", "H45", employee.has_unhealthy_pay)
 
-        set_checkbox(ws, "O25", "O26", employee.already_has_been_employee)
+        # Subsidiária
+        if employee_subsidiarie:
+            ws["H46"] = "X" if employee_subsidiarie.id == 1 else employee_subsidiarie.id
 
-        set_checkbox(ws, "W25", "W26", employee.trade_union_contribution_this_year)
+        # Turnos
+        if employee_turn:
+            turn_map = {1: "J35", 2: "J36", 3: "J37"}
+            cell = turn_map.get(employee.workdays_id)
+            if cell:
+                ws[cell] = "X"
+                ws[f"R{cell[1:]}"] = employee_turn.start_time
+                ws[f"X{cell[1:]}"] = employee_turn.start_interval_time
+                ws[f"AA{cell[1:]}"] = employee_turn.end_interval_time
+                ws[f"AF{cell[1:]}"] = employee_turn.end_time
 
-        set_checkbox(ws, "AA25", "AA26", employee.receiving_unemployment_insurance)
+        # Escolaridade
+        school_map = {
+            1: "AF18",
+            2: "AF19",
+            3: "AF20",
+            4: "AK18",
+            5: "AK19",
+            6: "AK20",
+            7: "AK21",
+        }
+        if employee.school_level_id:
+            cell = school_map.get(employee.school_level_id)
+            if cell:
+                ws[cell] = "X"
 
-        set_checkbox(ws, "AK25", "AK26", employee.has_previous_experience)
-
-        set_checkbox(ws, "P32", "M32", employee.has_harmfull_exposition)
-
-        set_checkbox(ws, "B35", "B36", employee.has_transport_voucher)
-
-        if employee.has_transport_voucher:
-            ws["G36"] = employee.daily_transport_units
-
+        # Experiência
         if employee.experience_time_id:
             ws["B39"] = "X"
-
             ws["F39"] = "X"
-
             ws["H41"] = "X"
-
         else:
             ws["B40"] = "X"
 
-        set_checkbox(ws, "K44", "H44", employee.has_hazard_pay)
-
-        set_checkbox(ws, "K45", "H45", employee.has_unhealthy_pay)
-
-        if employee_subsidiarie.id == 1:
-            ws["H46"] = "X"
-
-        else:
-            ws["K46"] = employee_subsidiarie.id
-
-        if employee.workdays_id == 1:
-            ws["J35"] = "X"
-
-            ws["R35"] = employee_turn.start_time
-
-            ws["X35"] = employee_turn.start_interval_time
-
-            ws["AA35"] = employee_turn.end_interval_time
-
-            ws["AF35"] = employee_turn.end_time
-
-        elif employee.workdays_id == 2:
-            ws["J36"] = "X"
-
-            ws["R36"] = employee_turn.start_time
-
-            ws["X36"] = employee_turn.start_interval_time
-
-            ws["AA36"] = employee_turn.end_interval_time
-
-            ws["AF36"] = employee_turn.end_time
-
-        elif employee.workdays_id == 3:
-            ws["J37"] = "X"
-
-            ws["R37"] = employee_turn.start_time
-
-            ws["X37"] = employee_turn.start_interval_time
-
-            ws["AA37"] = employee_turn.end_interval_time
-
-            ws["AF37"] = employee_turn.end_time
-
-        if employee.school_level_id == 1:
-            ws["AF18"] = "X"
-
-        elif employee.school_level_id == 2:
-            ws["AF19"] = "X"
-
-        elif employee.school_level_id == 3:
-            ws["AF20"] = "X"
-
-        elif employee.school_level_id == 4:
-            ws["AK18"] = "X"
-
-        elif employee.school_level_id == 5:
-            ws["AK19"] = "X"
-
-        elif employee.school_level_id == 6:
-            ws["AK20"] = "X"
-
-        elif employee.school_level_id == 7:
-            ws["AK21"] = "X"
-
-        ws["W44"] = "X"
-
-        ws["AJ44"] = employee.ag
-
-        ws["AM44"] = employee.cc
-
-        if employee.health_insurance is not None:
+        # Seguros e adiantamento salarial
+        if employee.health_insurance:
             ws["W46"] = "X"
-
             ws["AB46"] = employee.health_insurance
-
-        if employee.life_insurance is not None:
+        if employee.life_insurance:
             ws["AH46"] = "X"
-
             ws["AM46"] = employee.life_insurance
-
-        ws["H10"] = employee.datebirth
-
-        if employee.wage_advance is not None:
+        if employee.wage_advance:
             ws["W45"] = "X"
-
             ws["AB45"] = employee.wage_advance
 
+        # Pais
         columns = {
             "name": "J",
             "datebirth": "Y",
@@ -433,53 +413,34 @@ async def handle_post_send_employees_admission_to_contability(id: int):
             "book": "AL",
             "paper": "AN",
         }
-
-        for i, parent in enumerate(employee.parents[:3]):
+        for i, parent in enumerate(employee.parents[:3] if employee.parents else []):
             row = 13 + i
+            for key, col in columns.items():
+                ws[f"{col}{row}"] = parent.get(key, "")
 
-            ws[f"{columns['name']}{row}"] = parent.get("name", "")
-
-            ws[f"{columns['datebirth']}{row}"] = parent.get("datebirth", "")
-
-            ws[f"{columns['cityState']}{row}"] = parent.get("cityState", "")
-
-            ws[f"{columns['cpf']}{row}"] = parent.get("cpf", "")
-
-            ws[f"{columns['book']}{row}"] = parent.get("book", "")
-
-            ws[f"{columns['paper']}{row}"] = parent.get("paper", "")
-
+        # Salva arquivo e cria email
         file_stream = io.BytesIO()
-
         wb.save(file_stream)
-
         file_stream.seek(0)
-
         message = MIMEMultipart()
-
         message["From"] = SMTP_USER
-
         message["To"] = MABECON_EMAIL
-
         message["Subject"] = (
             f"Encaminhamento de documentos do colaborador {employee.name} para admissão"
         )
-
         message.attach(
             MIMEText(
-                f"Seguem os documentos do colaborador {employee.name} para admissão em {employee.admission_date}: {employee.drive_files_url}",
+                f"Seguem em anexo os documentos do colaborador {employee.name} para admissão em {employee.admission_date}",
                 "plain",
             )
         )
 
         file_name = f"ficha_da_contabilidade_{employee.name}.xlsx"
-
         part = MIMEApplication(file_stream.read(), Name=file_name)
-
         part["Content-Disposition"] = f'attachment; filename="{file_name}"'
-
         message.attach(part)
 
+        # Anexos binários
         binary_fields = [
             ("ctps_file", f"ctps_{employee.name}.pdf"),
             (
@@ -497,46 +458,35 @@ async def handle_post_send_employees_admission_to_contability(id: int):
                 f"certificado_reservista_{employee.name}.pdf",
             ),
         ]
-
         for field, default_name in binary_fields:
             file_data = getattr(employee, field, None)
-
             if file_data:
-                mimetype, _ = mimetypes.guess_type(default_name)
-
                 part = MIMEApplication(file_data, Name=default_name)
-
                 part["Content-Disposition"] = f'attachment; filename="{default_name}"'
-
                 message.attach(part)
 
+        # Arquivos dos pais
         parent_files = [
-            ("birthCertificate", f"certidao_nascimento_{employee.name}"),
-            ("vaccinationCard", f"carteira_vacinacao_{employee.name}"),
-            ("schoolingProof", f"comprovante_escolar_{employee.name}"),
+            ("birthCertificate", "certidao_nascimento"),
+            ("vaccinationCard", "carteira_vacinacao"),
+            ("schoolingProof", "comprovante_escolar"),
         ]
-
         for i, parent in enumerate(employee.parents or []):
             for field, prefix in parent_files:
                 file_b64 = parent.get(field)
-
                 if file_b64:
                     try:
                         file_data = base64.b64decode(file_b64)
-
                         file_name = f"{prefix}_parent_{i + 1}.pdf"
-
                         part = MIMEApplication(file_data, Name=file_name)
-
                         part["Content-Disposition"] = (
                             f'attachment; filename="{file_name}"'
                         )
-
                         message.attach(part)
-
                     except Exception as e:
                         print(f"Erro ao decodificar {field} do parent {i + 1}: {e}")
 
+        # Envio de email
         try:
             await aiosmtplib.send(
                 message,
@@ -546,7 +496,6 @@ async def handle_post_send_employees_admission_to_contability(id: int):
                 password=SMTP_PASS,
                 start_tls=True,
             )
-
         except Exception as e:
             return {"error": f"Falha ao enviar email: {str(e)}"}
 
