@@ -14,6 +14,15 @@ async def handle_get_functions_by_subsidiarie():
         return result.all()
 
 
+async def handle_get_functions_by_id(id: int):
+    async with AsyncSession(engine) as session:
+        query = select(Functions).where(Functions.id == id)
+
+        result = await session.exec(query)
+
+        return result.first()
+
+
 async def handle_post_functions(function: Functions):
     async with AsyncSession(engine) as session:
         session.add(function)

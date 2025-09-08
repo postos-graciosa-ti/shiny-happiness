@@ -16,6 +16,17 @@ async def handle_get_neighborhoods():
         return neighborhoods
 
 
+async def handle_get_neighborhoods_by_id(id: int):
+    async with AsyncSession(engine) as session:
+        query = select(Neighborhoods).where(Neighborhoods.id == id)
+
+        result = await session.exec(query)
+
+        neighborhoods = result.first()
+
+        return neighborhoods
+
+
 async def handle_post_neighborhoods(neighborhood: Neighborhoods):
     async with AsyncSession(engine) as session:
         session.add(neighborhood)
