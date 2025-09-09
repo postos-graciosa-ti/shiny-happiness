@@ -11,7 +11,7 @@ import aiosmtplib
 from decouple import config
 from docx import Document
 from openpyxl import load_workbook
-from sqlalchemy import and_, extract
+from sqlalchemy import Integer, and_, cast, extract
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -503,12 +503,10 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
 async def handle_post_employees_birthday_list(body: EmployeesBirthdayListProps):
     async with AsyncSession(engine) as session:
-        target_month = body.month
-
         birthday_query = select(Employees).where(
             and_(
                 Employees.subsidiarie_id == body.subsidiarie_id,
-                extract("month", Employees.datebirth) == target_month,
+                extract("month", Employees.datebirth) == cast(body.month, Integer),
             )
         )
 
