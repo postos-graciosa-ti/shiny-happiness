@@ -13,6 +13,7 @@ async def seed_subsidiaries():
             "address": "R. Florianópolis, 510 – Itaum, Joinville – SC, 89207-000",
             "phone": "(47) 3436-0030",
             "ie": "251.006.042",
+            "web_postos_subsidiarie_code": "14526",
         },
         {
             "name": "Auto Posto Fátima",
@@ -20,6 +21,7 @@ async def seed_subsidiaries():
             "address": "R. Fátima, 1730 – Fátima, Joinville – SC, 89229-102",
             "phone": "(47) 3466-0248",
             "ie": "251.297.373",
+            "web_postos_subsidiarie_code": "00",
         },
         {
             "name": "Posto Bemer",
@@ -27,6 +29,7 @@ async def seed_subsidiaries():
             "address": "R. Boehmerwald, 675 – Boehmerwald, Joinville – SC, 89232-485",
             "phone": "(47) 3465-0328",
             "ie": "252.073.924",
+            "web_postos_subsidiarie_code": "00",
         },
         {
             "name": "Posto Jariva",
@@ -34,6 +37,7 @@ async def seed_subsidiaries():
             "address": "R. Monsenhor Gercino, 5085 – Jarivatuba, Joinville – SC, 89230-290",
             "phone": "(47) 3466-4665",
             "ie": "254.220.738",
+            "web_postos_subsidiarie_code": "00",
         },
         {
             "name": "Posto Graciosa V",
@@ -41,6 +45,7 @@ async def seed_subsidiaries():
             "address": "R. Santa Catarina, 1870 – Floresta, Joinville – SC, 89212-000",
             "phone": "(47) 3436-1763",
             "ie": "250.205.572",
+            "web_postos_subsidiarie_code": "00",
         },
         {
             "name": "Auto Posto Pirai",
@@ -48,6 +53,7 @@ async def seed_subsidiaries():
             "address": "R. Quinze de Novembro, 5031 – Vila Nova, Joinville – SC, 89237-000",
             "phone": "(47) 3422-9676",
             "ie": "255.947.267",
+            "web_postos_subsidiarie_code": "00",
         },
     ]
 
