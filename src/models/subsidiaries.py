@@ -9,3 +9,4 @@ class Subsidiaries(SQLModel, table=True):
     cnpj: str
     ie: str
     phone: str
+    web_postos_subsidiarie_code: str
