@@ -84,6 +84,8 @@ async def handle_get_employees_table(id: int):
 
     turns_dict = {}
 
+    total_employees = 0
+
     for row in rows:
         turn_id = row["turn_id"]
 
@@ -102,14 +104,19 @@ async def handle_get_employees_table(id: int):
             {"id": row["id"], "name": row["name"]}
         )
 
-    result = []
+        total_employees += 1
+
+    result_list = []
 
     for turn in turns_dict.values():
         functions = list(turn["functions"].values())
 
-        result.append({"turn": turn["turn"], "functions": functions})
+        result_list.append({"turn": turn["turn"], "functions": functions})
 
-    return result
+    return {
+        "total_employees": total_employees,
+        "turns": result_list,
+    }
 
 
 async def handle_post_employees(employee: Employees):
