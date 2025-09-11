@@ -62,6 +62,147 @@ async def handle_get_employees_by_subsidiarie(id: int):
         return [encode_pdf_fields(emp) for emp in employees]
 
 
+async def handle_get_all_employees_table():
+    async with AsyncSession(engine) as session:
+        stmt = (
+            select(
+                Employees.id,
+                Employees.name,
+                Employees.subsidiarie_id,
+                Subsidiaries.name.label("subsidiarie_name"),
+                Turns.id.label("turn_id"),
+                Turns.name.label("turn_name"),
+                Functions.id.label("function_id"),
+                Functions.name.label("function_name"),
+            )
+            .join(Turns, Employees.turn_id == Turns.id)
+            .join(Functions, Employees.function_id == Functions.id)
+            .join(Subsidiaries, Employees.subsidiarie_id == Subsidiaries.id)
+        )
+
+        result = await session.execute(stmt)
+
+        rows = result.mappings().all()
+
+    subsidiaries_dict = {}
+
+    total_employees = 0
+
+    for row in rows:
+        subs_id = row["subsidiarie_id"]
+
+        turn_id = row["turn_id"]
+
+        func_id = row["function_id"]
+
+        if subs_id not in subsidiaries_dict:
+            subsidiaries_dict[subs_id] = {
+                "subsidiarie": row["subsidiarie_name"],
+                "turns": {},
+                "total_employees": 0,
+            }
+
+        if turn_id not in subsidiaries_dict[subs_id]["turns"]:
+            subsidiaries_dict[subs_id]["turns"][turn_id] = {
+                "turn": row["turn_name"],
+                "functions": {},
+            }
+
+        if func_id not in subsidiaries_dict[subs_id]["turns"][turn_id]["functions"]:
+            subsidiaries_dict[subs_id]["turns"][turn_id]["functions"][func_id] = {
+                "function": row["function_name"],
+                "employees": [],
+            }
+
+        subsidiaries_dict[subs_id]["turns"][turn_id]["functions"][func_id][
+            "employees"
+        ].append({"id": row["id"], "name": row["name"]})
+
+        subsidiaries_dict[subs_id]["total_employees"] += 1
+
+        total_employees += 1
+
+    result_list = []
+
+    for subs in subsidiaries_dict.values():
+        turns = []
+
+        for turn in subs["turns"].values():
+            functions = list(turn["functions"].values())
+
+            turns.append({"turn": turn["turn"], "functions": functions})
+
+        result_list.append(
+            {
+                "subsidiarie": subs["subsidiarie"],
+                "total_employees": subs["total_employees"],
+                "turns": turns,
+            }
+        )
+
+    return {
+        "total_employees": total_employees,
+        "subsidiaries": result_list,
+    }
+
+
+async def handle_get_employees_table(id: int):
+    async with AsyncSession(engine) as session:
+        stmt = (
+            select(
+                Employees.id,
+                Employees.name,
+                Turns.id.label("turn_id"),
+                Turns.name.label("turn_name"),
+                Functions.id.label("function_id"),
+                Functions.name.label("function_name"),
+            )
+            .join(Turns, Employees.turn_id == Turns.id)
+            .join(Functions, Employees.function_id == Functions.id)
+            .where(Employees.subsidiarie_id == id)
+        )
+
+        result = await session.execute(stmt)
+
+        rows = result.mappings().all()
+
+    turns_dict = {}
+
+    total_employees = 0
+
+    for row in rows:
+        turn_id = row["turn_id"]
+
+        func_id = row["function_id"]
+
+        if turn_id not in turns_dict:
+            turns_dict[turn_id] = {"turn": row["turn_name"], "functions": {}}
+
+        if func_id not in turns_dict[turn_id]["functions"]:
+            turns_dict[turn_id]["functions"][func_id] = {
+                "function": row["function_name"],
+                "employees": [],
+            }
+
+        turns_dict[turn_id]["functions"][func_id]["employees"].append(
+            {"id": row["id"], "name": row["name"]}
+        )
+
+        total_employees += 1
+
+    result_list = []
+
+    for turn in turns_dict.values():
+        functions = list(turn["functions"].values())
+
+        result_list.append({"turn": turn["turn"], "functions": functions})
+
+    return {
+        "total_employees": total_employees,
+        "turns": result_list,
+    }
+
+
 async def handle_post_employees(employee: Employees):
     parse_dates(employee)
 
