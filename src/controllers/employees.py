@@ -11,7 +11,7 @@ import aiosmtplib
 from decouple import config
 from docx import Document
 from openpyxl import load_workbook
-from sqlalchemy import Integer, and_, cast, extract
+from sqlalchemy import and_, extract
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -503,10 +503,14 @@ async def handle_post_send_employees_admission_to_contability(id: int):
 
 async def handle_post_employees_birthday_list(body: EmployeesBirthdayListProps):
     async with AsyncSession(engine) as session:
-        birthday_query = select(Employees).where(
+        month = int(body.month)
+
+        birthday_query = select(
+            Employees.id, Employees.name, Employees.datebirth
+        ).where(
             and_(
                 Employees.subsidiarie_id == body.subsidiarie_id,
-                extract("month", Employees.datebirth) == cast(body.month, Integer),
+                extract("month", Employees.datebirth) == month,
             )
         )
 
@@ -514,7 +518,12 @@ async def handle_post_employees_birthday_list(body: EmployeesBirthdayListProps):
 
         employees_with_birthdays = query_result.all()
 
-        return employees_with_birthdays
+        result = [
+            {"id": id_, "name": name, "datebirth": datebirth}
+            for id_, name, datebirth in employees_with_birthdays
+        ]
+
+        return result
 
 
 # NOTE: possível melhoria: só alterar o registro se for diferente do que está no banco real
