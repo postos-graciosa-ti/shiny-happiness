@@ -12,3 +12,12 @@ async def handle_get_turns():
         turns = result.all()
 
         return turns
+
+
+async def handle_get_turns_by_id(id: int):
+    async with AsyncSession(engine) as session:
+        query = select(Turns).where(Turns.id == id)
+
+        result = await session.exec(query)
+
+        return result.first()
