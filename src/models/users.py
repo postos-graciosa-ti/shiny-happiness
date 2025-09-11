@@ -8,3 +8,4 @@ class Users(SQLModel, table=True):
     password: str
     name: str
     email: str
+    is_admin: bool

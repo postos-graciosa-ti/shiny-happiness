@@ -12,6 +12,7 @@ users_seed = [
         "password": sha256_crypt.hash(config("DEFAULT_PWD")),
         "name": "Administrador",
         "email": "postosgraciosati@gmail.com",
+        "is_admin": True,
     }
 ]
 
