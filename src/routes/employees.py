@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from src.controllers.employees import (
     handle_delete_employees,
     handle_get_employees_by_subsidiarie,
+    handle_get_employees_table,
     handle_patch_employees,
     handle_post_employees,
     handle_post_employees_birthday_list,
@@ -19,6 +20,11 @@ employees_routes = APIRouter(dependencies=[Depends(verify_jwt_token)])
 @employees_routes.get("/subsidiaries/{id}/employees")
 async def get_employees(id: int):
     return await handle_get_employees_by_subsidiarie(id)
+
+
+@employees_routes.get("/subsidiaries/{id}/employees-table")
+async def get_employees_table(id: int):
+    return await handle_get_employees_table(id)
 
 
 @employees_routes.post("/subsidiaries/{id}/employees")

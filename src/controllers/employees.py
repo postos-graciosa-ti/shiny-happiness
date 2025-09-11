@@ -62,6 +62,56 @@ async def handle_get_employees_by_subsidiarie(id: int):
         return [encode_pdf_fields(emp) for emp in employees]
 
 
+async def handle_get_employees_table(id: int):
+    async with AsyncSession(engine) as session:
+        stmt = (
+            select(
+                Employees.id,
+                Employees.name,
+                Turns.id.label("turn_id"),
+                Turns.name.label("turn_name"),
+                Functions.id.label("function_id"),
+                Functions.name.label("function_name"),
+            )
+            .join(Turns, Employees.turn_id == Turns.id)
+            .join(Functions, Employees.function_id == Functions.id)
+            .where(Employees.subsidiarie_id == id)
+        )
+
+        result = await session.execute(stmt)
+
+        rows = result.mappings().all()
+
+    turns_dict = {}
+
+    for row in rows:
+        turn_id = row["turn_id"]
+
+        func_id = row["function_id"]
+
+        if turn_id not in turns_dict:
+            turns_dict[turn_id] = {"turn": row["turn_name"], "functions": {}}
+
+        if func_id not in turns_dict[turn_id]["functions"]:
+            turns_dict[turn_id]["functions"][func_id] = {
+                "function": row["function_name"],
+                "employees": [],
+            }
+
+        turns_dict[turn_id]["functions"][func_id]["employees"].append(
+            {"id": row["id"], "name": row["name"]}
+        )
+
+    result = []
+
+    for turn in turns_dict.values():
+        functions = list(turn["functions"].values())
+
+        result.append({"turn": turn["turn"], "functions": functions})
+
+    return result
+
+
 async def handle_post_employees(employee: Employees):
     parse_dates(employee)
 
