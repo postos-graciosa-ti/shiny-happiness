@@ -253,24 +253,44 @@ async def handle_post_request_admissional_exam(id: int):
             "{{ cpf }}": employee.cpf if employee else "",
             "{{ sector }}": sector.name if sector else "",
             "{{ function }}": function.name if function else "",
+            "{{ datebirth }}": (
+                employee.datebirth.strftime("%d/%m/%Y")
+                if employee and employee.datebirth
+                else ""
+            ),
         }
 
-        for p in doc.paragraphs:
+        def replace_placeholders_in_text(text: str) -> str:
             for ph, val in placeholders.items():
-                if ph in p.text:
-                    for run in p.runs:
-                        if ph in run.text:
-                            run.text = run.text.replace(ph, val)
+                text = text.replace(ph, val)
+
+            return text
+
+        for p in doc.paragraphs:
+            if any(ph in p.text for ph in placeholders):
+                new_text = replace_placeholders_in_text(p.text)
+
+                for r in p.runs:
+                    r.text = ""
+
+                if p.runs:
+                    p.runs[0].text = new_text
+
+                else:
+                    p.add_run(new_text)
 
         for table in doc.tables:
             for row in table.rows:
                 for cell in row.cells:
-                    for ph, val in placeholders.items():
-                        if ph in cell.text:
-                            for p in cell.paragraphs:
-                                for run in p.runs:
-                                    if ph in run.text:
-                                        run.text = run.text.replace(ph, val)
+                    if any(ph in cell.text for ph in placeholders):
+                        for p in cell.paragraphs:
+                            new_text = replace_placeholders_in_text(p.text)
+                            for r in p.runs:
+                                r.text = ""
+                            if p.runs:
+                                p.runs[0].text = new_text
+                            else:
+                                p.add_run(new_text)
 
         output_path = os.path.join(
             "src", "assets", f"admissional_exam_{employee.id}.docx"
