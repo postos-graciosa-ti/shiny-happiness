@@ -646,6 +646,17 @@ async def handle_post_send_employees_admission_to_contability(id: int):
                     except Exception as e:
                         print(f"Erro ao decodificar {field} do parent {i + 1}: {e}")
 
+        if employee.employee_files:
+            for i, file_b64 in enumerate(employee.employee_files):
+                try:
+                    file_data = base64.b64decode(file_b64)
+                    file_name = f"employee_file_{i + 1}.pdf"  # você pode customizar o nome se quiser
+                    part = MIMEApplication(file_data, Name=file_name)
+                    part["Content-Disposition"] = f'attachment; filename="{file_name}"'
+                    message.attach(part)
+                except Exception as e:
+                    print(f"Erro ao decodificar ou anexar arquivo {i + 1}: {e}")
+
         # Envio de email
         try:
             await aiosmtplib.send(
