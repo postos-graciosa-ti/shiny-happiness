@@ -91,7 +91,7 @@
 from datetime import date
 from typing import Any, List, Optional
 
-from sqlalchemy import JSON, Column, LargeBinary
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 
