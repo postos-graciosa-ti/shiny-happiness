@@ -496,8 +496,8 @@ async def handle_post_send_employees_admission_to_contability(id: int):
                     safe_row("AJ6", employee.street_complement),
                     safe_row("AM7", employee_residence_state, "name"),
                     safe_row("H10", employee.datebirth),
-                    safe_row("AJ44", employee.ag),
-                    safe_row("AM44", employee.cc),
+                    # safe_row("AJ44", employee.ag),
+                    # safe_row("AM44", employee.cc),
                 ],
             )
         )

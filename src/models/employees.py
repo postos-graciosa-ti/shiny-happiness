@@ -99,9 +99,9 @@ class Employees(SQLModel, table=True):
     __tablename__ = "employees"
     id: Optional[int] = Field(default=None, primary_key=True)
     name: Optional[str] = Field(default=None, nullable=True)
-    tshirt_len: Optional[str] = Field(default=None, nullable=True)
-    legs_len: Optional[str] = Field(default=None, nullable=True)
-    feet_len: Optional[str] = Field(default=None, nullable=True)
+    # tshirt_len: Optional[str] = Field(default=None, nullable=True)
+    # legs_len: Optional[str] = Field(default=None, nullable=True)
+    # feet_len: Optional[str] = Field(default=None, nullable=True)
     subsidiarie_id: Optional[int] = Field(
         default=None, foreign_key="subsidiaries.id", nullable=True
     )
@@ -129,6 +129,7 @@ class Employees(SQLModel, table=True):
     civil_status_id: Optional[int] = Field(
         default=None, foreign_key="civil_status.id", nullable=True
     )
+    emergency_contact_name: Optional[str] = Field(default=None, nullable=True)
     emergency_number: Optional[str] = Field(default=None, nullable=True)
     esocial: Optional[str] = Field(default=None, nullable=True)
     access_code: Optional[str] = Field(default=None, nullable=True)
@@ -216,8 +217,8 @@ class Employees(SQLModel, table=True):
     wage_advance: Optional[str] = Field(default=None, nullable=True)
     health_insurance: Optional[str] = Field(default=None, nullable=True)
     life_insurance: Optional[str] = Field(default=None, nullable=True)
-    ag: Optional[str] = Field(default=None, nullable=True)
-    cc: Optional[str] = Field(default=None, nullable=True)
+    # ag: Optional[str] = Field(default=None, nullable=True)
+    # cc: Optional[str] = Field(default=None, nullable=True)
     has_harmfull_exposition: Optional[bool] = Field(default=None, nullable=True)
     nationalitie_id: Optional[int] = Field(
         default=None, foreign_key="nationalities.id", nullable=True
